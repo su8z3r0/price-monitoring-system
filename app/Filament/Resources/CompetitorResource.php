@@ -33,7 +33,7 @@ class CompetitorResource extends Resource
                     ->maxLength(255),
                 Forms\Components\Textarea::make('crawler_config')
                     ->rows(10)
-                    ->helperText('...'),
+                    ->helperText('Enter JSON with: base_url, product_urls (optional), selectors (sku, title, price)'),
                 Forms\Components\Toggle::make('is_active')
                     ->default(true)
             ])

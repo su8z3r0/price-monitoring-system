@@ -10,8 +10,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Get;
+use Illuminate\Support\HtmlString;
 
 class SupplierResource extends Resource
 {
@@ -30,24 +30,34 @@ class SupplierResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255)
-                    ->label('Name'),
+                    ->label('Supplier Name'),
 
                 Forms\Components\Select::make('source_type')
                     ->options([
-                        'local' => 'Local',
-                        'ftp' => 'FTP',
-                        'http' => 'HTTP',
+                        'local' => 'Local File',
+                        'ftp' => 'FTP Server',
+                        'http' => 'HTTP/HTTPS URL',
                     ])
-                    ->required(),
+                    ->required()
+                    ->live()
+                    ->label('Source Type'),
+
+                // Box informativo che cambia in base al source_type
+                Forms\Components\Placeholder::make('config_help')
+                    ->label('Configuration Guide')
+                    ->content(fn (Get $get) => new HtmlString(self::getConfigGuideHtml($get('source_type'))))
+                    ->hidden(fn (Get $get) => !$get('source_type')),
 
                 Forms\Components\Textarea::make('source_config')
                     ->required()
-                    ->rows(10)
-                    ->placeholder('{}')
-                    ->label('Configuration'),
+                    ->rows(12)
+                    ->label('Source Configuration (JSON)')
+                    ->placeholder('{}'),
 
                 Forms\Components\Toggle::make('is_active')
+                    ->label('Active')
                     ->default(true)
+                    ->inline(false),
             ])
             ->columns(1);
     }
@@ -111,5 +121,89 @@ class SupplierResource extends Resource
             'create' => Pages\CreateSupplier::route('/create'),
             'edit' => Pages\EditSupplier::route('/{record}/edit'),
         ];
+    }
+
+    private static function getConfigGuideHtml(?string $sourceType): string
+    {
+        $configs = [
+            'local' => [
+                'icon' => '📁',
+                'title' => 'Local File',
+                'fields' => [
+                    'path' => 'Path to CSV file in storage (e.g., /storage/suppliers/file.csv)',
+                    'columns' => 'Column mapping: sku, title, price',
+                ],
+                'example' => [
+                    'path' => '/storage/suppliers/supplier1.csv',
+                    'columns' => ['sku' => 'sku', 'title' => 'product_name', 'price' => 'price'],
+                ],
+            ],
+            'ftp' => [
+                'icon' => '🌐',
+                'title' => 'FTP Server',
+                'fields' => [
+                    'host' => 'FTP hostname (e.g., ftp.supplier.com)',
+                    'username' => 'FTP username',
+                    'password' => 'FTP password',
+                    'path' => 'Remote file path',
+                    'columns' => 'Column mapping: sku, title, price',
+                ],
+                'example' => [
+                    'host' => 'ftp.supplier.com',
+                    'username' => 'user',
+                    'password' => '••••••••',
+                    'path' => '/exports/products.csv',
+                    'columns' => ['sku' => 'code', 'title' => 'name', 'price' => 'price'],
+                ],
+            ],
+            'http' => [
+                'icon' => '🔗',
+                'title' => 'HTTP/HTTPS URL',
+                'fields' => [
+                    'url' => 'Direct URL to CSV file',
+                    'columns' => 'Column mapping: sku, title, price',
+                ],
+                'example' => [
+                    'url' => 'https://supplier.com/api/products.csv',
+                    'columns' => ['sku' => 'product_code', 'title' => 'name', 'price' => 'sale_price'],
+                ],
+            ],
+        ];
+
+        if (!$sourceType || !isset($configs[$sourceType])) {
+            return '<div class="text-gray-500 text-sm">Select a source type to see configuration guide</div>';
+        }
+
+        $config = $configs[$sourceType];
+
+        $html = '<div class="space-y-3 text-sm">';
+
+        // Title
+        $html .= '<div class="flex items-center gap-2 font-semibold text-lg">';
+        $html .= '<span>' . $config['icon'] . '</span>';
+        $html .= '<span>' . $config['title'] . '</span>';
+        $html .= '</div>';
+
+        // Fields
+        $html .= '<div class="space-y-2">';
+        foreach ($config['fields'] as $field => $description) {
+            $html .= '<div>';
+            $html .= '<span class="font-medium text-primary-600">' . $field . ':</span> ';
+            $html .= '<span class="text-gray-600">' . $description . '</span>';
+            $html .= '</div>';
+        }
+        $html .= '</div>';
+
+        // Example
+        $html .= '<div class="mt-4">';
+        $html .= '<div class="font-medium mb-2">Example Configuration:</div>';
+        $html .= '<pre class="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg overflow-x-auto text-xs">';
+        $html .= htmlspecialchars(json_encode($config['example'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        $html .= '</pre>';
+        $html .= '</div>';
+
+        $html .= '</div>';
+
+        return $html;
     }
 }
