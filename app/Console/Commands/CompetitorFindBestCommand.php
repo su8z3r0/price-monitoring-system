@@ -18,7 +18,6 @@ class CompetitorFindBestCommand extends Command
 
         $this->info("✓ Updated {$count} best prices");
 
-        // Opzionale: mostra statistiche
         $stats = $service->getStatistics();
         $this->table(
             ['Metric', 'Value'],

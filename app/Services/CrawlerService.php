@@ -27,9 +27,9 @@ class CrawlerService
         $config = $competitor->crawler_config;
 
         if (is_string($config)) {
-            $config = trim($config, '"'); // Rimuovi apici esterni
-            $config = str_replace('\n', '', $config); // Rimuovi \n
-            $config = stripslashes($config); // Rimuovi backslashes
+            $config = trim($config, '"');
+            $config = str_replace('\n', '', $config);
+            $config = stripslashes($config);
             $config = json_decode($config, true);
         }
 

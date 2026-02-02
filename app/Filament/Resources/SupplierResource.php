@@ -42,7 +42,6 @@ class SupplierResource extends Resource
                     ->live()
                     ->label('Source Type'),
 
-                // Box informativo che cambia in base al source_type
                 Forms\Components\Placeholder::make('config_help')
                     ->label('Configuration Guide')
                     ->content(fn (Get $get) => new HtmlString(self::getConfigGuideHtml($get('source_type'))))
@@ -109,9 +108,7 @@ class SupplierResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -178,13 +175,11 @@ class SupplierResource extends Resource
 
         $html = '<div class="space-y-3 text-sm">';
 
-        // Title
         $html .= '<div class="flex items-center gap-2 font-semibold text-lg">';
         $html .= '<span>' . $config['icon'] . '</span>';
         $html .= '<span>' . $config['title'] . '</span>';
         $html .= '</div>';
 
-        // Fields
         $html .= '<div class="space-y-2">';
         foreach ($config['fields'] as $field => $description) {
             $html .= '<div>';
@@ -194,7 +189,6 @@ class SupplierResource extends Resource
         }
         $html .= '</div>';
 
-        // Example
         $html .= '<div class="mt-4">';
         $html .= '<div class="font-medium mb-2">Example Configuration:</div>';
         $html .= '<pre class="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg overflow-x-auto text-xs">';

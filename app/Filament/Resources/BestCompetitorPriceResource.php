@@ -73,9 +73,7 @@ class BestCompetitorPriceResource extends Resource
                     ->sortable()
                     ->label('Winner Competitor')
             ])
-            ->filters([
-                //
-            ])
+            ->filters([])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
@@ -91,9 +89,7 @@ class BestCompetitorPriceResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

@@ -50,7 +50,6 @@ class PriceComparisonService
      */
     private function findBestPrice(Collection $prices): ?array
     {
-        // Ordina per sale_price crescente e prendi il primo
         $best = $prices->sortBy('sale_price')->first();
 
         if (!$best) {
