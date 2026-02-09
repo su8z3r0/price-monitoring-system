@@ -10,6 +10,7 @@ class CompetitorPrice extends Model
     protected $fillable = [
         'competitor_id',
         'sku',
+        'normalized_sku',
         'product_title',
         'sale_price',
         'product_url',

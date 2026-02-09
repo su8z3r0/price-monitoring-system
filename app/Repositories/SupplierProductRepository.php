@@ -25,6 +25,19 @@ class SupplierProductRepository
     }
 
     /**
+     * Get all products grouped by normalized_sku
+     *
+     * @return Collection
+     */
+    public function getAllGroupedByNormalizedSku(): Collection
+    {
+        return $this->model
+            ->with('supplier')
+            ->get()
+            ->groupBy('normalized_sku');
+    }
+
+    /**
      * Get products by supplier ID
      *
      * @param int $supplierId

@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\Competitor;
 use App\Repositories\CompetitorPriceRepository;
+use App\Utils\PriceParser;
+use App\Utils\SkuGenerator;
+use App\Utils\SkuNormalizer;
 use Illuminate\Support\Facades\Http;
 use Symfony\Component\DomCrawler\Crawler;
 
@@ -49,11 +52,18 @@ class CrawlerService
                 $productData = $this->scrapeProduct($url, $config['selectors']);
 
                 if ($productData) {
+
+                    $sku = $productData['sku'];
+                    $title = $productData['title'];
+                    $normalizedSku = SkuNormalizer::normalize($productData['sku']);
+                    $price = $productData['price'];
+
                     $this->repo->create([
                         'competitor_id' => $competitor->id,
-                        'sku' => $productData['sku'],
-                        'product_title' => $productData['title'],
-                        'sale_price' => $productData['price'],
+                        'sku' => $sku,
+                        'normalized_sku' => $normalizedSku,
+                        'product_title' => $title,
+                        'sale_price' => $price,
                         'product_url' => $url,
                         'scraped_at' => now(),
                     ]);
@@ -138,8 +148,11 @@ class CrawlerService
         $crawler = new Crawler($html);
 
         try {
-            $sku = $this->extractText($crawler, $selectors['sku'] ?? null);
+            $skuRaw = $this->extractText($crawler, $selectors['sku'] ?? null);
             $title = $this->extractText($crawler, $selectors['title'] ?? null);
+
+            $sku = SkuGenerator::smart($skuRaw, $url, $title);
+
             $priceText = $this->extractText($crawler, $selectors['price'] ?? null);
 
             if (!$sku || !$title || !$priceText) {
@@ -149,7 +162,7 @@ class CrawlerService
             return [
                 'sku' => $sku,
                 'title' => $title,
-                'price' => $this->parsePrice($priceText),
+                'price' => PriceParser::parse($priceText),
             ];
 
         } catch (\Exception $e) {

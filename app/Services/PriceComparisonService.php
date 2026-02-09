@@ -22,18 +22,25 @@ class PriceComparisonService
     {
         $this->bestPriceRepo->truncate();
 
-        $grouped = $this->competitorPriceRepo->getAllGroupedBySku();
+        $grouped = $this->competitorPriceRepo->getAllGroupedByNormalizedSku();
 
         $count = 0;
-        foreach ($grouped as $sku => $prices) {
+        foreach ($grouped as $normalizedSku => $prices) {
             $bestPrice = $this->findBestPrice($prices);
 
             if ($bestPrice) {
+
+                $sku = $bestPrice['sku'];
+                $productTitle = $bestPrice['product_title'];
+                $salePrice = $bestPrice['sale_price'];
+                $winnerCompetitor = $bestPrice['winner_competitor'];
+
                 $this->bestPriceRepo->create([
                     'sku' => $sku,
-                    'product_title' => $bestPrice['product_title'],
-                    'sale_price' => $bestPrice['sale_price'],
-                    'winner_competitor' => $bestPrice['winner_competitor'],
+                    'normalized_sku' => $normalizedSku,
+                    'product_title' => $productTitle,
+                    'sale_price' => $salePrice,
+                    'winner_competitor' => $winnerCompetitor,
                 ]);
 
                 $count++;

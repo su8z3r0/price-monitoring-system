@@ -10,6 +10,7 @@ class SupplierProduct extends Model
     protected $fillable = [
         'supplier_id',
         'sku',
+        'normalized_sku',
         'title',
         'price',
         'imported_at'

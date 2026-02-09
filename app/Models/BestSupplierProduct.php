@@ -9,6 +9,7 @@ class BestSupplierProduct extends Model
 {
     protected $fillable = [
         'sku',
+        'normalized_sku',
         'title',
         'price',
         'winner_supplier_id'

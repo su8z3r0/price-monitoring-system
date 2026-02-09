@@ -8,6 +8,7 @@ class BestCompetitorPrice extends Model
 {
     protected $fillable = [
         'sku',
+        'normalized_sku',
         'product_title',
         'sale_price',
         'winner_competitor'

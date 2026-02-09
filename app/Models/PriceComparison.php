@@ -8,6 +8,7 @@ class PriceComparison extends Model
 {
     protected $fillable = [
         'sku',
+        'normalized_sku',
         'product_title',
         'our_price',
         'competitor_price',

@@ -25,6 +25,19 @@ class CompetitorPriceRepository
     }
 
     /**
+     * Get all prices grouped by normalized_sku
+     * @return Collection
+     */
+    public function getAllGroupedByNormalizedSku(): Collection
+    {
+        return $this->model
+            ->with('competitor')
+            ->orderBy('normalized_sku')
+            ->get()
+            ->groupBy('normalized_sku');
+    }
+
+    /**
      * Get specific competitor prices
      * @param int $competitorId
      * @return Collection

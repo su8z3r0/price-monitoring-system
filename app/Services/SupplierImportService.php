@@ -27,7 +27,16 @@ class SupplierImportService
     {
         $parser = $this->parserFactory->make($supplier->source_type);
 
-        $products = $parser->parse($supplier->source_config);
+        $config = $supplier->source_config;
+
+        if (is_string($config)) {
+            $config = trim($config, '"'); // Rimuovi apici esterni
+            $config = str_replace('\n', '', $config); // Rimuovi \n
+            $config = stripslashes($config); // Rimuovi backslashes
+            $config = json_decode($config, true);
+        }
+
+        $products = $parser->parse($config);
 
         $this->supplierProductRepo->deleteBySupplier($supplier->id);
 
@@ -72,20 +81,20 @@ class SupplierImportService
     {
         $this->bestProductRepo->truncate();
 
-        $grouped = $this->supplierProductRepo->getAllGroupedBySku();
+        $grouped = $this->supplierProductRepo->getAllGroupedByNormalizedSku();
 
         $count = 0;
-        foreach ($grouped as $sku => $products) {
-            $bestProduct = $this->findBestProduct($products);
+        foreach ($grouped as $normalizedSku => $products) {
+            $bestProduct = $products->sortBy('price')->first();
 
             if ($bestProduct) {
                 $this->bestProductRepo->create([
-                    'sku' => $sku,
-                    'title' => $bestProduct['title'],
-                    'price' => $bestProduct['price'],
-                    'winner_supplier_id' => $bestProduct['supplier_id'],
+                    'sku' => $bestProduct->sku,
+                    'normalized_sku' => $normalizedSku,
+                    'title' => $bestProduct->title,
+                    'price' => $bestProduct->price,
+                    'winner_supplier_id' => $bestProduct->supplier_id,
                 ]);
-
                 $count++;
             }
         }
@@ -129,6 +138,7 @@ class SupplierImportService
             $data[] = [
                 'supplier_id' => $supplierId,
                 'sku' => $product['sku'],
+                'normalized_sku' => $product['normalized_sku'],
                 'title' => $product['title'],
                 'price' => $product['price'],
                 'imported_at' => $now,
