@@ -8,6 +8,7 @@ use App\Utils\PriceParser;
 use App\Utils\SkuGenerator;
 use App\Utils\SkuNormalizer;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\DomCrawler\Crawler;
 
 class CrawlerService
@@ -31,9 +32,9 @@ class CrawlerService
         $config = $competitor->crawler_config;
 
         if (is_string($config)) {
-            $config = trim($config, '"'); // Rimuovi apici esterni
-            $config = str_replace('\n', '', $config); // Rimuovi \n
-            $config = stripslashes($config); // Rimuovi backslashes
+            $config = trim($config, '"'); // Remove external quotes
+            $config = str_replace('\n', '', $config); // Remove \n
+            $config = stripslashes($config); // Remove backslashes
             $config = json_decode($config, true);
         }
 
