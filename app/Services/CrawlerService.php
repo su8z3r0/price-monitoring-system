@@ -15,7 +15,8 @@ class CrawlerService
     private const RATE_LIMIT_SECONDS = 60;
 
     public function __construct(
-        private CompetitorPriceRepository $repo
+        private CompetitorPriceRepository $repo,
+        private ProxyPool $proxyPool
     ) {}
 
     /**
@@ -52,18 +53,12 @@ class CrawlerService
                 $productData = $this->scrapeProduct($url, $config['selectors']);
 
                 if ($productData) {
-
-                    $sku = $productData['sku'];
-                    $title = $productData['title'];
-                    $normalizedSku = SkuNormalizer::normalize($productData['sku']);
-                    $price = $productData['price'];
-
                     $this->repo->create([
                         'competitor_id' => $competitor->id,
-                        'sku' => $sku,
-                        'normalized_sku' => $normalizedSku,
-                        'product_title' => $title,
-                        'sale_price' => $price,
+                        'sku' => $productData['sku'],
+                        'ean' => $productData['ean'] ?? null,
+                        'product_title' => $productData['title'],
+                        'sale_price' => $productData['price'],
                         'product_url' => $url,
                         'scraped_at' => now(),
                     ]);
@@ -74,6 +69,7 @@ class CrawlerService
                 sleep(self::RATE_LIMIT_SECONDS);
 
             } catch (\Exception $e) {
+                Log::error('Failed to scrape product', ['url' => $url, 'error' => $e->getMessage()]);
                 continue;
             }
         }
@@ -128,7 +124,7 @@ class CrawlerService
     }
 
     /**
-     * Scrape single product page
+     * Scrape single product page with proxy rotation and EAN extraction
      *
      * @param string $url
      * @param array $selectors
@@ -137,37 +133,86 @@ class CrawlerService
      */
     private function scrapeProduct(string $url, array $selectors): ?array
     {
-        $response = Http::timeout(30)
-            ->get($url);
+        $maxRetries = config('proxy.max_retries', 3);
+        $attempt = 0;
+        $lastException = null;
 
-        if (!$response->successful()) {
-            throw new \RuntimeException("Failed to fetch URL: {$url}");
-        }
+        while ($attempt < $maxRetries) {
+            try {
+                // Get proxy if enabled
+                $proxy = $this->proxyPool->getNextProxy();
+                
+                // Build HTTP client with proxy
+                $http = Http::timeout(config('proxy.timeout', 30));
+                
+                if ($proxy) {
+                    $proxyOptions = $this->proxyPool->buildGuzzleProxyOptions($proxy);
+                    $http = $http->withOptions($proxyOptions);
+                    Log::info('Scraping with proxy: ' . $proxy['url'], ['url' => $url]);
+                }
+                
+                $response = $http->get($url);
 
-        $html = $response->body();
-        $crawler = new Crawler($html);
+                if (!$response->successful()) {
+                    throw new \RuntimeException("HTTP {$response->status()} for URL: {$url}");
+                }
 
-        try {
-            $skuRaw = $this->extractText($crawler, $selectors['sku'] ?? null);
-            $title = $this->extractText($crawler, $selectors['title'] ?? null);
+                $html = $response->body();
+                
+                if (empty($html)) {
+                    throw new \RuntimeException("Empty response from server");
+                }
+                
+                $crawler = new Crawler($html);
 
-            $sku = SkuGenerator::smart($skuRaw, $url, $title);
+                $sku = $this->extractText($crawler, $selectors['sku'] ?? null);
+                $title = $this->extractText($crawler, $selectors['title'] ?? null);
+                $ean = $this->extractEan($crawler);
+                $priceText = $this->extractText($crawler, $selectors['price'] ?? null);
 
-            $priceText = $this->extractText($crawler, $selectors['price'] ?? null);
+                if (!$sku || !$title || !$priceText) {
+                    return null;
+                }
 
-            if (!$sku || !$title || !$priceText) {
-                return null;
+                return [
+                    'sku' => $sku,
+                    'ean' => $ean,
+                    'title' => $title,
+                    'price' => $this->parsePrice($priceText),
+                ];
+
+            } catch (\Exception $e) {
+                $lastException = $e;
+                $attempt++;
+                
+                // Mark proxy as failed if used
+                if ($proxy) {
+                    $this->proxyPool->markAsFailed($proxy['url']);
+                    Log::warning('Proxy failed, attempt ' . $attempt . '/' . $maxRetries, [
+                        'proxy' => $proxy['url'],
+                        'error' => $e->getMessage()
+                    ]);
+                } else {
+                    Log::warning('Scraping failed (no proxy), attempt ' . $attempt . '/' . $maxRetries, [
+                        'url' => $url,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+                
+                // Sleep before retry
+                if ($attempt < $maxRetries) {
+                    sleep(2);
+                }
             }
-
-            return [
-                'sku' => $sku,
-                'title' => $title,
-                'price' => PriceParser::parse($priceText),
-            ];
-
-        } catch (\Exception $e) {
-            return null;
         }
+
+        // All retries failed
+        Log::error('Scraping failed after ' . $maxRetries . ' attempts', [
+            'url' => $url,
+            'last_error' => $lastException?->getMessage()
+        ]);
+        
+        return null; // Return null instead of throwing to allow continuing with other products
     }
 
     /**
@@ -214,5 +259,95 @@ class CrawlerService
         }
 
         return (float) $clean;
+    }
+
+    /**
+     * Extract EAN using multiple strategies
+     */
+    private function extractEan(Crawler $crawler): ?string
+    {
+        // 1. JSON-LD
+        $ean = $this->extractEanFromJsonLd($crawler);
+        if ($ean) return $ean;
+
+        // 2. Meta Tags
+        $ean = $this->extractEanFromMeta($crawler);
+        if ($ean) return $ean;
+
+        // 3. Data Attributes (generic)
+        $ean = $this->extractEanFromDataAttribute($crawler, 'data-ean');
+        if ($ean) return $ean;
+
+        return null;
+    }
+
+    private function extractEanFromJsonLd(Crawler $crawler): ?string
+    {
+        try {
+            $scripts = $crawler->filter('script[type="application/ld+json"]');
+            
+            foreach ($scripts as $script) {
+                $json = json_decode($script->nodeValue, true);
+                if (!$json) continue;
+
+                $ean = $this->findFieldRecursive($json, ['gtin13', 'gtin', 'ean']);
+                if ($ean) return $this->cleanupEan($ean);
+            }
+        } catch (\Exception $e) {}
+
+        return null;
+    }
+
+    private function extractEanFromMeta(Crawler $crawler): ?string
+    {
+        $metas = [
+            'meta[itemprop="gtin13"]',
+            'meta[property="product:ean"]',
+            'meta[name="ean"]'
+        ];
+
+        foreach ($metas as $selector) {
+            try {
+                $element = $crawler->filter($selector)->first();
+                if ($element->count()) {
+                    return $this->cleanupEan($element->attr('content'));
+                }
+            } catch (\Exception $e) {}
+        }
+
+        return null;
+    }
+
+    private function extractEanFromDataAttribute(Crawler $crawler, string $attribute): ?string
+    {
+        try {
+            $element = $crawler->filter("[{$attribute}]")->first();
+            if ($element->count()) return $this->cleanupEan($element->attr($attribute));
+        } catch (\Exception $e) {}
+
+        return null;
+    }
+
+    private function findFieldRecursive(array $data, array $keys): ?string
+    {
+        foreach ($keys as $key) {
+            if (isset($data[$key]) && is_string($data[$key])) {
+                return $data[$key];
+            }
+        }
+
+        foreach ($data as $value) {
+            if (is_array($value)) {
+                $found = $this->findFieldRecursive($value, $keys);
+                if ($found) return $found;
+            }
+        }
+
+        return null;
+    }
+
+    private function cleanupEan(string $ean): string
+    {
+        return trim(preg_replace('/[^0-9]/', '', $ean));
     }
 }
