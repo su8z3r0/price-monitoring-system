@@ -27,15 +27,19 @@ class CompetitorResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('name')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->label('Name'),
                 Forms\Components\TextInput::make('website')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->label('Website'),
                 Forms\Components\Textarea::make('crawler_config')
                     ->rows(10)
+                    ->label('Crawler Configuration')
                     ->helperText('Enter JSON with: base_url, product_urls (optional), selectors (sku, title, price)'),
                 Forms\Components\Toggle::make('is_active')
                     ->default(true)
+                    ->label('Active')
             ])
             ->columns(1);
     }

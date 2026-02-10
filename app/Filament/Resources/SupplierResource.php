@@ -42,7 +42,7 @@ class SupplierResource extends Resource
                     ->live()
                     ->label('Source Type'),
 
-                // Box informativo che cambia in base al source_type
+                // Informational box based on source_type
                 Forms\Components\Placeholder::make('config_help')
                     ->label('Configuration Guide')
                     ->content(fn (Get $get) => new HtmlString(self::getConfigGuideHtml($get('source_type'))))
