@@ -32,6 +32,11 @@ class SupplierResource extends Resource
                     ->maxLength(255)
                     ->label('Supplier Name'),
 
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Active')
+                    ->default(true)
+                    ->inline(false),
+
                 Forms\Components\Select::make('source_type')
                     ->options([
                         'local' => 'Local File',
@@ -53,11 +58,6 @@ class SupplierResource extends Resource
                     ->rows(12)
                     ->label('Source Configuration (JSON)')
                     ->placeholder('{}'),
-
-                Forms\Components\Toggle::make('is_active')
-                    ->label('Active')
-                    ->default(true)
-                    ->inline(false),
             ])
             ->columns(1);
     }
