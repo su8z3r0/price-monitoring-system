@@ -34,6 +34,7 @@ class LocalCsvParser extends AbstractParser
         }
 
         $csv = Reader::createFromPath($filePath, 'r');
+        $this->configureReader($csv, $config);
         $csv->setHeaderOffset(0);
 
         return $this->normalizeData($csv->getRecords(), $config['columns']);
