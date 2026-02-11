@@ -186,6 +186,9 @@ class CrawlerService
                 
                 // Build HTTP client with proxy and headers
                 $http = Http::timeout(config('proxy.timeout', 30))
+                    ->withOptions([
+                        'connect_timeout' => 10, // Fail fast on dead proxies
+                    ])
                     ->withHeaders([
                         'User-Agent' => $this->getRandomUserAgent(),
                         'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
