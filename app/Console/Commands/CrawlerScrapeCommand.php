@@ -98,7 +98,31 @@ class CrawlerScrapeCommand extends Command
      */
     private function scrapeAllCompetitors(CrawlerService $service): int
     {
-        $results = $service->scrapeAll();
+        $results = $service->scrapeAll(function ($status, $data) {
+            switch ($status) {
+                case 'info':
+                    $this->info($data);
+                    break;
+                case 'scraping':
+                    $this->line("<comment>Scraping: {$data}</comment>");
+                    break;
+                case 'generated':
+                    $this->info("   ✓ Found: {$data}");
+                    break;
+                case 'error':
+                    $this->error("   ✗ Error: {$data}");
+                    break;
+                case 'wait':
+                    $this->line("   ... Sleeping {$data}s");
+                    break;
+                case 'debug':
+                    $this->line("   <comment>{$data}</comment>");
+                    break;
+                case 'warning':
+                    $this->warn("{$data}");
+                    break;
+            }
+        });
 
         $this->displayResults($results);
 

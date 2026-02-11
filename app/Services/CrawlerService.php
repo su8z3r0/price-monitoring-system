@@ -101,15 +101,19 @@ class CrawlerService
      *
      * @return array Results per competitor
      */
-    public function scrapeAll(): array
+    public function scrapeAll(?\Closure $onProgress = null): array
     {
         $competitors = Competitor::where('is_active', true)->get();
 
         $results = [];
 
         foreach ($competitors as $competitor) {
+            if ($onProgress) {
+                $onProgress('info', "Starting competitor: {$competitor->name}");
+            }
+
             try {
-                $count = $this->scrapeCompetitor($competitor);
+                $count = $this->scrapeCompetitor($competitor, $onProgress);
                 $results[$competitor->name] = [
                     'success' => true,
                     'count' => $count,
