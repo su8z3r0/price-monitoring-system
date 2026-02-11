@@ -67,7 +67,11 @@ class CrawlerService
                     $count++;
                 }
 
-                sleep(self::RATE_LIMIT_SECONDS);
+
+
+                $delay = $this->proxyPool->hasProxies() ? 2 : self::RATE_LIMIT_SECONDS;
+                Log::info("Sleeping for {$delay} seconds...");
+                sleep($delay);
 
             } catch (\Exception $e) {
                 Log::error('Failed to scrape product', ['url' => $url, 'error' => $e->getMessage()]);

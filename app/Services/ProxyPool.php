@@ -77,4 +77,19 @@ class ProxyPool
             'proxy' => $proxy['url']
         ];
     }
+    /**
+     * Check if pool has available proxies
+     */
+    public function hasProxies(): bool
+    {
+        return !empty($this->proxies);
+    }
+
+    /**
+     * Get total proxy count
+     */
+    public function getTotalCount(): int
+    {
+        return count($this->proxies);
+    }
 }
