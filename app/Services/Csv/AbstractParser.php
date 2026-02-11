@@ -43,6 +43,12 @@ abstract class AbstractParser implements CsvParserInterface
             $sku = $record[$columnMap['sku']] ?? null;
             $title = $record[$columnMap['title']] ?? null;
             $price = $this->parsePrice($record[$columnMap['price']] ?? '0');
+            $ean = isset($columnMap['ean']) ? ($record[$columnMap['ean']] ?? null) : null;
+
+            // Fallback: Use EAN as SKU if SKU is missing
+            if (empty($sku) && !empty($ean)) {
+                $sku = $ean;
+            }
 
             $normalizedSku = SkuNormalizer::normalize($sku);
 

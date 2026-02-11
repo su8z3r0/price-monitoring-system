@@ -54,9 +54,9 @@ class SupplierResource extends Resource
                     ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $state)
                     ->dehydrateStateUsing(fn ($state) => json_decode($state, true))
                     ->helperText(fn (Get $get) => match ($get('source_type')) {
-                        'ftp' => 'Example: {"host": "ftp.site.com", "username": "user", "password": "pass", "path": "/file.csv", "delimiter": ";", "enclosure": "\"", "columns": {"sku": "sku", "title": "name", "price": "price"}}',
-                        'http' => 'Example: {"url": "https://site.com/feed.csv", "delimiter": ";", "enclosure": "\"", "columns": {"sku": "sku", "title": "name", "price": "price"}}',
-                        default => 'Example: {"path": "/path/to/file.csv", "delimiter": ";", "enclosure": "\"", "columns": {"sku": "sku", "title": "name", "price": "price"}}',
+                        'ftp' => 'Example: {"host": "ftp.site.com", "username": "user", "password": "pass", "path": "/file.csv", "delimiter": ";", "enclosure": "\"", "columns": {"sku": "sku", "title": "name", "price": "price", "ean": "barcode"}}',
+                        'http' => 'Example: {"url": "https://site.com/feed.csv", "delimiter": ";", "enclosure": "\"", "columns": {"sku": "sku", "title": "name", "price": "price", "ean": "barcode"}}',
+                        default => 'Example: {"path": "/path/to/file.csv", "delimiter": ";", "enclosure": "\"", "columns": {"sku": "sku", "title": "name", "price": "price", "ean": "barcode"}}',
                     }),
             ])
             ->columns(1);

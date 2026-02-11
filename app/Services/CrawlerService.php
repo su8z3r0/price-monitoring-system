@@ -62,7 +62,6 @@ class CrawlerService
                         'competitor_id' => $competitor->id,
                         'sku' => $productData['sku'],
                         'normalized_sku' => SkuNormalizer::normalize($productData['sku']),
-                        'ean' => $productData['ean'] ?? null,
                         'product_title' => $productData['title'],
                         'sale_price' => $productData['price'],
                         'product_url' => $url,
