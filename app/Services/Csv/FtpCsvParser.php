@@ -52,4 +52,13 @@ class FtpCsvParser extends AbstractParser
 
         return $this->normalizeData($csv->getRecords(), $config['columns']);
     }
+    /**
+     * Get source type identifier
+     *
+     * @return string
+     */
+    public function getSourceType(): string
+    {
+        return 'ftp';
+    }
 }
