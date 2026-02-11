@@ -59,4 +59,20 @@ class HttpCsvParser extends AbstractParser
     {
         return 'http';
     }
+
+    /**
+     * Validate configuration
+     *
+     * @param array $config
+     * @throws \InvalidArgumentException
+     */
+    protected function validateConfig(array $config): void
+    {
+        $required = ['url', 'columns'];
+        foreach ($required as $field) {
+            if (empty($config[$field])) {
+                throw new \InvalidArgumentException("Missing required config field: {$field}");
+            }
+        }
+    }
 }

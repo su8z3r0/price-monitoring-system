@@ -61,4 +61,20 @@ class FtpCsvParser extends AbstractParser
     {
         return 'ftp';
     }
+
+    /**
+     * Validate configuration
+     *
+     * @param array $config
+     * @throws \InvalidArgumentException
+     */
+    protected function validateConfig(array $config): void
+    {
+        $required = ['host', 'username', 'password', 'path', 'columns'];
+        foreach ($required as $field) {
+            if (empty($config[$field])) {
+                throw new \InvalidArgumentException("Missing required config field: {$field}");
+            }
+        }
+    }
 }
