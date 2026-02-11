@@ -65,6 +65,7 @@ class PriceComparisonService
         }
 
         return [
+            'sku' => $best->sku,
             'product_title' => $best->product_title,
             'sale_price' => $best->sale_price,
             'winner_competitor' => $best->competitor->name,
