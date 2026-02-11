@@ -26,89 +26,28 @@ class HttpCsvParser extends AbstractParser
 
         $tempFile = $this->saveTempFile($content);
 
-        $result = $this->parseFile($tempFile, $config['columns']);
+        $result = $this->parseFile($tempFile, $config);
 
         unlink($tempFile);
 
         return $result;
     }
 
-    /**
-     * Get source type identifier
-     *
-     * @return string
-     */
-    public function getSourceType(): string
-    {
-        return 'http';
-    }
-
-    /**
-     * Validate required configuration keys
-     *
-     * @param array $config
-     * @return void
-     * @throws \InvalidArgumentException
-     */
-    private function validateConfig(array $config): void
-    {
-        if (!isset($config['url'])) {
-            throw new \InvalidArgumentException('Missing "url" in config');
-        }
-
-        if (!isset($config['columns'])) {
-            throw new \InvalidArgumentException('Missing "columns" in config');
-        }
-    }
-
-    /**
-     * Download CSV file from URL
-     *
-     * @param array $config
-     * @return string File content
-     * @throws \RuntimeException
-     */
-    private function downloadFile(array $config): string
-    {
-        $headers = $config['headers'] ?? [];
-
-        $response = Http::withHeaders($headers)
-            ->timeout(30)
-            ->get($config['url']);
-
-        if (!$response->successful()) {
-            throw new \RuntimeException("Failed to download file from: {$config['url']} (HTTP {$response->status()})");
-        }
-
-        return $response->body();
-    }
-
-    /**
-     * Save content to temporary file
-     *
-     * @param string $content
-     * @return string Path to temporary file
-     */
-    private function saveTempFile(string $content): string
-    {
-        $tempFile = tempnam(sys_get_temp_dir(), 'http_csv_');
-        file_put_contents($tempFile, $content);
-
-        return $tempFile;
-    }
+    // ... (keeping intervening methods unchanged) ...
 
     /**
      * Parse CSV file
      *
      * @param string $filePath
-     * @param array $columnMap
+     * @param array $config
      * @return Collection
      */
-    private function parseFile(string $filePath, array $columnMap): Collection
+    private function parseFile(string $filePath, array $config): Collection
     {
         $csv = Reader::createFromPath($filePath, 'r');
+        $this->configureReader($csv, $config);
         $csv->setHeaderOffset(0);
 
-        return $this->normalizeData($csv->getRecords(), $columnMap);
+        return $this->normalizeData($csv->getRecords(), $config['columns']);
     }
 }

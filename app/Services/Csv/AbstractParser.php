@@ -71,4 +71,20 @@ abstract class AbstractParser implements CsvParserInterface
     {
         return PriceParser::parse($priceText);
     }
+
+    /**
+     * Configure CSV Reader with delimiter and enclosure
+     *
+     * @param \League\Csv\Reader $csv
+     * @param array $config
+     * @return void
+     */
+    protected function configureReader($csv, array $config): void
+    {
+        $delimiter = $config['delimiter'] ?? ',';
+        $enclosure = $config['enclosure'] ?? '"';
+
+        $csv->setDelimiter($delimiter);
+        $csv->setEnclosure($enclosure);
+    }
 }
