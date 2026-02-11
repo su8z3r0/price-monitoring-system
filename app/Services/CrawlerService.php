@@ -130,6 +130,25 @@ class CrawlerService
     }
 
     /**
+     * Get a random User-Agent string
+     *
+     * @return string
+     */
+    private function getRandomUserAgent(): string
+    {
+        $agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:122.0) Gecko/20100101 Firefox/122.0',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
+        ];
+
+        return $agents[array_rand($agents)];
+    }
+
+    /**
      * Get list of product URLs to scrape
      *
      * @param array $config
@@ -168,7 +187,7 @@ class CrawlerService
                 // Build HTTP client with proxy and headers
                 $http = Http::timeout(config('proxy.timeout', 30))
                     ->withHeaders([
-                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'User-Agent' => $this->getRandomUserAgent(),
                         'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
                         'Accept-Language' => 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7',
                         'Cache-Control' => 'max-age=0',
