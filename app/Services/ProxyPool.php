@@ -57,14 +57,14 @@ class ProxyPool
         return $proxy;
     }
 
-    /**
-     * Mark proxy as failed
-     */
     public function markAsFailed(string $proxyUrl): void
     {
         if (!in_array($proxyUrl, $this->failedProxies)) {
             $this->failedProxies[] = $proxyUrl;
             Log::warning('Proxy marked as failed: ' . $proxyUrl);
+            
+            // Allow the service to handle persistent removal if it wants to
+            $this->geoNodeService->removeProxy($proxyUrl);
         }
     }
 
