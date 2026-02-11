@@ -188,7 +188,9 @@ class CrawlerService
                 $response = $http->get($url);
 
                 if (!$response->successful()) {
-                    throw new \RuntimeException("HTTP {$response->status()} for URL: {$url}");
+                    $body = substr($response->body(), 0, 500);
+                    Log::error("HTTP Error {$response->status()} for URL: {$url}", ['body' => $body]); 
+                    throw new \RuntimeException("HTTP {$response->status()}: {$body}");
                 }
 
                 $html = $response->body();
