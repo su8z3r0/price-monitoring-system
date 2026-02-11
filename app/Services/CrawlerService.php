@@ -55,7 +55,7 @@ class CrawlerService
             }
 
             try {
-                $productData = $this->scrapeProduct($url, $config['selectors']);
+                $productData = $this->scrapeProduct($url, $config['selectors'], $onProgress);
 
                 if ($productData) {
                     $this->repo->create([
@@ -150,7 +150,7 @@ class CrawlerService
      * @return array|null
      * @throws \RuntimeException
      */
-    private function scrapeProduct(string $url, array $selectors): ?array
+    private function scrapeProduct(string $url, array $selectors, ?\Closure $onProgress = null): ?array
     {
         $maxRetries = config('proxy.max_retries', 3);
         $attempt = 0;
@@ -180,6 +180,9 @@ class CrawlerService
                     $proxyOptions = $this->proxyPool->buildGuzzleProxyOptions($proxy);
                     $http = $http->withOptions($proxyOptions);
                     Log::info('Scraping with proxy: ' . $proxy['url'], ['url' => $url]);
+                    if ($onProgress) {
+                        $onProgress('debug', "   -> Proxy: {$proxy['url']}");
+                    }
                 }
                 
                 $response = $http->get($url);
