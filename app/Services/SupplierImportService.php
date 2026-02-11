@@ -23,8 +23,9 @@ class SupplierImportService
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
-    public function importSupplier(Supplier $supplier): int
+    public function importSupplier(Supplier $supplier, ?\Closure $onProgress = null): int
     {
+        if ($onProgress) $onProgress('info', 'Parsing CSV config...');
         $parser = $this->parserFactory->make($supplier->source_type);
 
         $config = $supplier->source_config;
@@ -36,10 +37,14 @@ class SupplierImportService
             $config = json_decode($config, true);
         }
 
+        if ($onProgress) $onProgress('info', 'Reading and parsing file...');
         $products = $parser->parse($config);
+        $count = $products->count();
+        if ($onProgress) $onProgress('info', "Parsed {$count} items.");
 
         $this->supplierProductRepo->deleteBySupplier($supplier->id);
 
+        if ($onProgress) $onProgress('info', 'Saving products to database...');
         return $this->saveProducts($supplier->id, $products);
     }
 

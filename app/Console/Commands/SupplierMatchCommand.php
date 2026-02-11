@@ -57,7 +57,13 @@ class SupplierMatchCommand extends Command
         $this->info("Importing: {$supplier->name}");
 
         try {
-            $count = $service->importSupplier($supplier);
+            $count = $service->importSupplier($supplier, function ($type, $message) {
+                if ($type === 'info') {
+                    $this->line("   <comment>{$message}</comment>");
+                } elseif ($type === 'error') {
+                    $this->error("   ✗ {$message}");
+                }
+            });
             $this->info("✓ Imported {$count} products from {$supplier->name}");
         } catch (\Exception $e) {
             $this->error("✗ Failed to import {$supplier->name}: {$e->getMessage()}");

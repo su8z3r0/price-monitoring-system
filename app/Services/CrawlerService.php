@@ -27,7 +27,7 @@ class CrawlerService
      * @return int Number of products scraped
      * @throws \RuntimeException
      */
-    public function scrapeCompetitor(Competitor $competitor): int
+    public function scrapeCompetitor(Competitor $competitor, ?\Closure $onProgress = null): int
     {
         $config = $competitor->crawler_config;
 
@@ -50,6 +50,10 @@ class CrawlerService
 
         $count = 0;
         foreach ($productUrls as $url) {
+            if ($onProgress) {
+                $onProgress('scraping', $url);
+            }
+
             try {
                 $productData = $this->scrapeProduct($url, $config['selectors']);
 
@@ -65,16 +69,26 @@ class CrawlerService
                     ]);
 
                     $count++;
+
+                    if ($onProgress) {
+                        $onProgress('generated', "{$productData['title']} ({$productData['sku']})");
+                    }
                 }
 
-
-
                 $delay = $this->proxyPool->hasProxies() ? 2 : self::RATE_LIMIT_SECONDS;
+                
+                if ($onProgress) {
+                    $onProgress('wait', (string)$delay);
+                }
+
                 Log::info("Sleeping for {$delay} seconds...");
                 sleep($delay);
 
             } catch (\Exception $e) {
                 Log::error('Failed to scrape product', ['url' => $url, 'error' => $e->getMessage()]);
+                if ($onProgress) {
+                    $onProgress('error', $e->getMessage());
+                }
                 continue;
             }
         }

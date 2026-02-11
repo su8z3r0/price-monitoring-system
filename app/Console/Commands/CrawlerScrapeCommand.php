@@ -59,7 +59,22 @@ class CrawlerScrapeCommand extends Command
         $this->info("Scraping: {$competitor->name}");
 
         try {
-            $count = $service->scrapeCompetitor($competitor);
+            $count = $service->scrapeCompetitor($competitor, function ($status, $data) {
+                switch ($status) {
+                    case 'scraping':
+                        $this->line("<comment>Scraping: {$data}</comment>");
+                        break;
+                    case 'generated':
+                        $this->info("   ✓ Found: {$data}");
+                        break;
+                    case 'error':
+                        $this->error("   ✗ Error: {$data}");
+                        break;
+                    case 'wait':
+                        $this->line("   ... Sleeping {$data}s");
+                        break;
+                }
+            });
             $this->info("✓ Scraped {$count} products from {$competitor->name}");
         } catch (\Exception $e) {
             $this->error("✗ Failed to scrape {$competitor->name}: {$e->getMessage()}");
