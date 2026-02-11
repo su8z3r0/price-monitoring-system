@@ -47,74 +47,13 @@ class SupplierResource extends Resource
                     ->live()
                     ->label('Source Type'),
 
-                Forms\Components\Group::make()
-                    ->schema([
-                        // Local / FTP Path
-                        Forms\Components\TextInput::make('path')
-                            ->label('File Path')
-                            ->required()
-                            ->hidden(fn (Get $get) => !in_array($get('../source_type'), ['local', 'ftp'])),
-
-                        // HTTP URL
-                        Forms\Components\TextInput::make('url')
-                            ->label('URL')
-                            ->required()
-                            ->url()
-                            ->hidden(fn (Get $get) => $get('../source_type') !== 'http'),
-
-                        // FTP Host
-                        Forms\Components\TextInput::make('host')
-                            ->label('FTP Host')
-                            ->required()
-                            ->hidden(fn (Get $get) => $get('../source_type') !== 'ftp'),
-
-                        // FTP Credentials
-                        Forms\Components\Grid::make(2)
-                            ->schema([
-                                Forms\Components\TextInput::make('username')
-                                    ->label('FTP Username'),
-                                Forms\Components\TextInput::make('password')
-                                    ->label('FTP Password')
-                                    ->password()
-                                    ->revealable(),
-                            ])
-                            ->hidden(fn (Get $get) => $get('../source_type') !== 'ftp'),
-
-                        // CSV Settings
-                        Forms\Components\Grid::make(2)
-                            ->schema([
-                                Forms\Components\TextInput::make('delimiter')
-                                    ->label('Delimiter')
-                                    ->default(',')
-                                    ->required()
-                                    ->maxLength(1),
-                                Forms\Components\TextInput::make('enclosure')
-                                    ->label('Enclosure')
-                                    ->default('"')
-                                    ->required()
-                                    ->maxLength(1),
-                            ]),
-
-                        // Column Mapping Section
-                        Forms\Components\Section::make('Column Mapping')
-                            ->description('Map internal fields to CSV headers')
-                            ->schema([
-                                Forms\Components\TextInput::make('columns.sku')
-                                    ->label('SKU Column Header')
-                                    ->required()
-                                    ->default('sku'),
-                                Forms\Components\TextInput::make('columns.title')
-                                    ->label('Title Column Header')
-                                    ->required()
-                                    ->default('title'),
-                                Forms\Components\TextInput::make('columns.price')
-                                    ->label('Price Column Header')
-                                    ->required()
-                                    ->default('price'),
-                            ])
-                            ->columns(3),
-                    ])
-                    ->statePath('source_config'),
+                Forms\Components\Textarea::make('source_config')
+                    ->label('Source Config (JSON)')
+                    ->helperText('Format: {"path": "...", "delimiter": ";", "enclosure": "\"", "columns": {"sku": "...", ...}}')
+                    ->rows(10)
+                    ->required()
+                    ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $state)
+                    ->dehydrateStateUsing(fn ($state) => json_decode($state, true)),
             ])
             ->columns(1);
     }
