@@ -49,11 +49,15 @@ class SupplierResource extends Resource
 
                 Forms\Components\Textarea::make('source_config')
                     ->label('Source Config (JSON)')
-                    ->helperText('Format: {"path": "...", "delimiter": ";", "enclosure": "\"", "columns": {"sku": "...", ...}}')
                     ->rows(10)
                     ->required()
                     ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $state)
-                    ->dehydrateStateUsing(fn ($state) => json_decode($state, true)),
+                    ->dehydrateStateUsing(fn ($state) => json_decode($state, true))
+                    ->helperText(fn (Get $get) => match ($get('source_type')) {
+                        'ftp' => 'Example: {"host": "ftp.site.com", "username": "user", "password": "pass", "path": "/file.csv", "delimiter": ";", "enclosure": "\"", "columns": {"sku": "sku", "title": "name", "price": "price"}}',
+                        'http' => 'Example: {"url": "https://site.com/feed.csv", "delimiter": ";", "enclosure": "\"", "columns": {"sku": "sku", "title": "name", "price": "price"}}',
+                        default => 'Example: {"path": "/path/to/file.csv", "delimiter": ";", "enclosure": "\"", "columns": {"sku": "sku", "title": "name", "price": "price"}}',
+                    }),
             ])
             ->columns(1);
     }
