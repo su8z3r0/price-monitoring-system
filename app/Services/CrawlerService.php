@@ -67,8 +67,7 @@ class CrawlerService
                     $count++;
                 }
 
-                    $count++;
-                }
+
 
                 $delay = $this->proxyPool->hasProxies() ? 2 : self::RATE_LIMIT_SECONDS;
                 Log::info("Sleeping for {$delay} seconds...");
