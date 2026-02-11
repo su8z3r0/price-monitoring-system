@@ -29,11 +29,12 @@ class GeoNodeProxyService
 
         try {
             $response = Http::get(self::GEONODE_API_URL, [
-                'limit' => $limit,
+                'limit' => 200,
                 'page' => 1,
                 'sort_by' => 'lastChecked',
                 'sort_type' => 'desc',
-                'protocols' => 'http,https', // Guzzle typically handles http/https proxies best
+                'protocols' => 'http,https',
+                'anonymityLevel' => 'elite',
             ]);
 
             if (!$response->successful()) {
@@ -82,45 +83,24 @@ class GeoNodeProxyService
 
         $requests = function ($proxies) {
             foreach ($proxies as $config) {
-                yield $config['url'] => new \GuzzleHttp\Psr7\Request('GET', 'http://www.google.com', [
+                yield $config['url'] => new \GuzzleHttp\Psr7\Request('GET', 'https://makeup.it', [
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                 ]);
             }
         };
-
-        $pool = new \GuzzleHttp\Pool($client, $requests($proxies), [
-            'concurrency' => 10,
-            'fulfilled' => function ($response, $proxyUrl) use (&$valid, $proxies) {
-                if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 400) {
-                    // Find original config
-                    foreach ($proxies as $p) {
-                        if ($p['url'] === $proxyUrl) {
-                            $valid[] = $p;
-                            break;
-                        }
-                    }
-                }
-            },
-            'rejected' => function ($reason, $proxyUrl) {
-                // Log::debug("Proxy failed validation: $proxyUrl");
-            },
-            'options' => function ($request) use ($proxies) {
-                 // Map request to proxy option
-                 // Note: The key in 'yield' is passed as index/key, but not directly accessible easily in options closure in older guzzle versions without some state.
-                 // Actually, simpler way: define Closures that capture the proxy config.
-                 return [];
-            }
-        ]);
         
-        // Re-implement simplified synchronous parallel validation because mapping dynamic options in Pool with simpler array keys is tricky without extra class overhead.
-        // Let's use Http::pool which is Laravel native and cleaner.
+        // ... (rest of method) but we need to update the pool logic below too?
+        // Actually, I should update the `Http::pool` logic below as well since that's what is likely being used or intended (lines 118+).
         
         $responses = Http::pool(fn (\Illuminate\Http\Client\Pool $pool) => 
             array_map(fn ($proxy) => 
                 $pool->as($proxy['url'])
                      ->withOptions(['proxy' => $proxy['url']])
-                     ->timeout(5)
-                     ->get('http://www.google.com'),
+                     ->timeout(10) // Increased timeout for real site
+                     ->withHeaders([
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                     ])
+                     ->get('https://makeup.it'),
                 $proxies
             )
         );
