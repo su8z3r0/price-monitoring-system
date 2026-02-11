@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 
 class CompetitorFindBestCommand extends Command
 {
-    protected $signature = 'competitor:find-best';
+    protected $signature = 'cyper:competitor:find-best';
     protected $description = 'Find best competitor prices by SKU';
 
     public function handle(PriceComparisonService $service): int

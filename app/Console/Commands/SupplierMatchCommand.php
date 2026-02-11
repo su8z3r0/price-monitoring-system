@@ -12,7 +12,7 @@ class SupplierMatchCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'supplier:match
+    protected $signature = 'cyper:supplier:match
                             {--supplier= : Import only specific supplier by ID}
                             {--skip-best : Skip best products calculation}';
 

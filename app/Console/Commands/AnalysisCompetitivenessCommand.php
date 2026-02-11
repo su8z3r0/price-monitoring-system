@@ -12,7 +12,7 @@ class AnalysisCompetitivenessCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'analysis:competitiveness
+    protected $signature = 'cyper:analysis:competitiveness
                             {--top=10 : Number of top products to show}';
 
     /**
@@ -34,8 +34,8 @@ class AnalysisCompetitivenessCommand extends Command
 
         if ($count === 0) {
             $this->warn('No products to compare. Make sure you have run:');
-            $this->line('  - php artisan competitor:find-best');
-            $this->line('  - php artisan supplier:match');
+            $this->line('  - php artisan cyper:competitor:find-best');
+            $this->line('  - php artisan cyper:supplier:match');
             return self::FAILURE;
         }
 

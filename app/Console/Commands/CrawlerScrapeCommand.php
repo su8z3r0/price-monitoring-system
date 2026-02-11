@@ -12,7 +12,7 @@ class CrawlerScrapeCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'crawler:scrape
+    protected $signature = 'cyper:crawler:scrape
                             {--competitor= : Scrape only specific competitor by ID}';
 
     /**
