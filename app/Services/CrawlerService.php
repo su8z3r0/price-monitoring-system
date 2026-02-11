@@ -61,6 +61,7 @@ class CrawlerService
                     $this->repo->create([
                         'competitor_id' => $competitor->id,
                         'sku' => $productData['sku'],
+                        'normalized_sku' => SkuNormalizer::normalize($productData['sku']),
                         'ean' => $productData['ean'] ?? null,
                         'product_title' => $productData['title'],
                         'sale_price' => $productData['price'],
@@ -231,6 +232,10 @@ class CrawlerService
                 $title = $this->extractText($crawler, $selectors['title'] ?? null);
                 $ean = $this->extractEan($crawler);
                 $priceText = $this->extractText($crawler, $selectors['price'] ?? null);
+
+                if (!$sku) {
+                    $sku = $ean;
+                }
 
                 if (!$sku || !$title || !$priceText) {
                     return null;
