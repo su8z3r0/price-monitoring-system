@@ -77,4 +77,54 @@ class FtpCsvParser extends AbstractParser
             }
         }
     }
+
+    /**
+     * Connect to FTP server
+     *
+     * @param array $config
+     * @return mixed FTP connection resource
+     * @throws \RuntimeException
+     */
+    private function connectToFtp(array $config)
+    {
+        $host = $config['host'];
+        $port = $config['port'] ?? 21;
+        $timeout = 30;
+
+        $conn = ftp_connect($host, $port, $timeout);
+
+        if (!$conn) {
+            throw new \RuntimeException("Could not connect to FTP server: {$host}");
+        }
+
+        if (!@ftp_login($conn, $config['username'], $config['password'])) {
+            throw new \RuntimeException("Could not login to FTP server: {$host}");
+        }
+
+        ftp_pasv($conn, true);
+
+        return $conn;
+    }
+
+    /**
+     * Download file from FTP
+     *
+     * @param mixed $conn FTP connection resource
+     * @param string $remotePath
+     * @return string Local temp file path
+     * @throws \RuntimeException
+     */
+    private function downloadFile($conn, string $remotePath): string
+    {
+        $tempFile = @tempnam(sys_get_temp_dir(), 'csv_ftp_');
+        $handle = fopen($tempFile, 'w');
+
+        if (!ftp_fget($conn, $handle, $remotePath, FTP_ASCII)) {
+            fclose($handle);
+            throw new \RuntimeException("Could not download file from FTP: {$remotePath}");
+        }
+
+        fclose($handle);
+        return $tempFile;
+    }
 }

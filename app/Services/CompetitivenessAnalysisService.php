@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Repositories\BestSupplierProductRepository;
 use App\Repositories\BestCompetitorPriceRepository;
 use App\Repositories\PriceComparisonRepository;
+use App\Utils\SkuNormalizer;
 
 class CompetitivenessAnalysisService
 {
@@ -47,6 +48,7 @@ class CompetitivenessAnalysisService
 
             $comparisons[] = [
                 'sku' => $sku,
+                'normalized_sku' => SkuNormalizer::normalize($sku),
                 'product_title' => $supplierProduct->title,
                 'our_price' => $ourPrice,
                 'competitor_price' => $theirPrice,

@@ -75,4 +75,35 @@ class HttpCsvParser extends AbstractParser
             }
         }
     }
+
+    /**
+     * Download file content from URL
+     *
+     * @param array $config
+     * @return string
+     * @throws \RuntimeException
+     */
+    private function downloadFile(array $config): string
+    {
+        $response = Http::timeout(60)->get($config['url']);
+
+        if (!$response->successful()) {
+            throw new \RuntimeException("Failed to download CSV from URL: {$config['url']} (Status: {$response->status()})");
+        }
+
+        return $response->body();
+    }
+
+    /**
+     * Save content to temporary file
+     *
+     * @param string $content
+     * @return string Path to temp file
+     */
+    private function saveTempFile(string $content): string
+    {
+        $tempFile = @tempnam(sys_get_temp_dir(), 'csv_http_');
+        file_put_contents($tempFile, $content);
+        return $tempFile;
+    }
 }
